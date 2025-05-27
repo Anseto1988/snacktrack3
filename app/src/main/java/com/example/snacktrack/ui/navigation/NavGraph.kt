@@ -18,9 +18,11 @@ import com.example.snacktrack.ui.screens.dog.DogDetailScreen
 import com.example.snacktrack.ui.screens.dog.DogListScreen
 import com.example.snacktrack.ui.screens.food.FoodDetailScreen
 import com.example.snacktrack.ui.screens.food.ManualFoodEntryScreen
+// Import für den neuen FoodSubmissionScreen (muss noch erstellt werden)
+// import com.example.snacktrack.ui.screens.food.FoodSubmissionScreen
 import com.example.snacktrack.ui.screens.weight.AddWeightScreen
 import com.example.snacktrack.ui.screens.weight.WeightHistoryScreen
-import com.example.snacktrack.ui.screens.food.BarcodeScanner // Renamed to avoid conflict if necessary
+import com.example.snacktrack.ui.screens.food.BarcodeScanner
 import com.example.snacktrack.ui.viewmodel.DogViewModel
 
 //ViewModel Factory for DogViewModel
@@ -53,7 +55,7 @@ sealed class Screen(val route: String) {
         fun createRoute(dogId: String) = "dog_detail/$dogId"
     }
 
-    object BarcodeScannerNav : Screen("barcode_scanner_screen/{dogId}") { // Changed name to avoid class name collision
+    object BarcodeScannerNav : Screen("barcode_scanner_screen/{dogId}") {
         fun createRoute(dogId: String) = "barcode_scanner_screen/$dogId"
     }
 
@@ -63,6 +65,11 @@ sealed class Screen(val route: String) {
 
     object ManualFoodEntry : Screen("manual_food_entry/{dogId}") {
         fun createRoute(dogId: String) = "manual_food_entry/$dogId"
+    }
+
+    // Neue Route für Food Submission
+    object FoodSubmission : Screen("food_submission/{dogId}?ean={ean}") {
+        fun createRoute(dogId: String, ean: String) = "food_submission/$dogId?ean=$ean"
     }
 
     object AddWeight : Screen("add_weight/{dogId}") {
@@ -94,7 +101,7 @@ fun SnackTrackNavGraph(navController: NavHostController) {
                 onRegisterSuccess = {
                     navController.navigate(Screen.DogList.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
-                        popUpTo(Screen.Login.route) { inclusive = true } // Also pop login if it's in backstack
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
                 onBackClick = { navController.popBackStack() }
@@ -128,7 +135,7 @@ fun SnackTrackNavGraph(navController: NavHostController) {
 
         composable(Screen.AddDog.route) {
             AddEditDogScreen(
-                dogId = null, // For adding a new dog
+                dogId = null,
                 onSaveSuccess = { navController.popBackStack() },
                 onBackClick = { navController.popBackStack() }
             )
@@ -140,7 +147,7 @@ fun SnackTrackNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val dogId = backStackEntry.arguments?.getString("dogId")
             AddEditDogScreen(
-                dogId = dogId, // For editing an existing dog
+                dogId = dogId,
                 onSaveSuccess = { navController.popBackStack() },
                 onBackClick = { navController.popBackStack() }
             )
@@ -164,19 +171,16 @@ fun SnackTrackNavGraph(navController: NavHostController) {
             arguments = listOf(navArgument("dogId") { type = NavType.StringType })
         ) { backStackEntry ->
             val dogId = backStackEntry.arguments?.getString("dogId") ?: ""
-            BarcodeScanner( // from com.example.snacktrack.ui.screens.food.BarcodeScanner
+            BarcodeScanner(
                 dogId = dogId,
                 onFoodFound = { foodId ->
-                    // First pop scanner, then navigate to food detail to avoid scanner in backstack when pressing back from FoodDetail
                     navController.popBackStack()
                     navController.navigate(Screen.FoodDetail.createRoute(foodId, dogId))
                 },
-                onFoodNotFound = { ean ->
-                    // Handle EAN not found. Example: Navigate to manual entry or a submission screen.
-                    // For now, pop scanner and go to manual entry.
+                onFoodNotFound = { ean -> // ean ist der gescannte Barcode
                     navController.popBackStack()
-                    navController.navigate(Screen.ManualFoodEntry.createRoute(dogId))
-                    // TODO: Optionally pass 'ean' to the manual entry or a new food submission screen.
+                    // Navigiere zum neuen FoodSubmissionScreen mit dem gescannten EAN
+                    navController.navigate(Screen.FoodSubmission.createRoute(dogId, ean))
                 },
                 onBackClick = { navController.popBackStack() }
             )
@@ -210,6 +214,28 @@ fun SnackTrackNavGraph(navController: NavHostController) {
                 onBackClick = { navController.popBackStack() }
             )
         }
+
+        // Composable für den neuen FoodSubmissionScreen
+        composable(
+            route = Screen.FoodSubmission.route,
+            arguments = listOf(
+                navArgument("dogId") { type = NavType.StringType },
+                navArgument("ean") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val dogId = backStackEntry.arguments?.getString("dogId") ?: ""
+            val ean = backStackEntry.arguments?.getString("ean") ?: ""
+            // Hier den FoodSubmissionScreen aufrufen (muss noch erstellt werden)
+            // FoodSubmissionScreen(
+            //     dogId = dogId,
+            //     ean = ean,
+            //     onSaveSuccess = { navController.popBackStack() },
+            //     onBackClick = { navController.popBackStack() }
+            // )
+            // Platzhalter, bis FoodSubmissionScreen.kt erstellt ist:
+            androidx.compose.material3.Text("FoodSubmissionScreen für EAN: $ean, DogID: $dogId (TODO)")
+        }
+
 
         composable(
             route = Screen.AddWeight.route,

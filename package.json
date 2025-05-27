@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "react-native-camera": "^4.2.1"
+  }
+}
